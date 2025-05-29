@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Copy, ArrowRight, Languages } from 'lucide-react';
+import { Copy, Languages } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
 import TranslateButton from './TranslateButton';
+import SpeechRecognition from './SpeechRecognition';
+import TextToSpeech from './TextToSpeech';
 import { useToast } from '@/hooks/use-toast';
 
 const TranslationCard = () => {
@@ -13,6 +15,7 @@ const TranslationCard = () => {
   const [translatedText, setTranslatedText] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const { toast } = useToast();
 
   const translateText = async () => {
@@ -76,6 +79,10 @@ const TranslationCard = () => {
     }
   };
 
+  const handleSpeechTranscription = (transcript: string) => {
+    setJapaneseText(transcript);
+  };
+
   return (
     <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
       <CardHeader className="text-center">
@@ -83,6 +90,7 @@ const TranslationCard = () => {
           <Languages className="w-6 h-6 text-blue-600" />
           Japanese Translator
         </CardTitle>
+        <p className="text-sm text-gray-600">Type, speak, or paste Japanese text to translate</p>
       </CardHeader>
       
       <CardContent className="space-y-6">
@@ -94,16 +102,23 @@ const TranslationCard = () => {
                 <span className="text-lg">🇯🇵</span>
                 Japanese
               </label>
-              {japaneseText && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(japaneseText)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                <SpeechRecognition
+                  onTranscriptionComplete={handleSpeechTranscription}
+                  isRecording={isRecording}
+                  onRecordingChange={setIsRecording}
+                />
+                {japaneseText && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(japaneseText)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
             
             <Textarea
@@ -112,7 +127,14 @@ const TranslationCard = () => {
               onChange={(e) => setJapaneseText(e.target.value)}
               className="min-h-[120px] text-lg border-2 border-gray-200 focus:border-blue-400 transition-colors"
               style={{ fontFamily: '"Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif' }}
+              disabled={isRecording}
             />
+            
+            {isRecording && (
+              <div className="text-center text-blue-600 text-sm animate-pulse">
+                🎤 Listening for Japanese speech...
+              </div>
+            )}
           </div>
 
           {/* Output Section */}
@@ -122,16 +144,23 @@ const TranslationCard = () => {
                 selectedLanguage={targetLanguage} 
                 onLanguageChange={setTargetLanguage} 
               />
-              {translatedText && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(translatedText)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                <TextToSpeech 
+                  text={translatedText} 
+                  language={targetLanguage}
+                  disabled={!translatedText}
+                />
+                {translatedText && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(translatedText)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
             
             <div className="min-h-[120px] p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
@@ -153,7 +182,7 @@ const TranslationCard = () => {
           <TranslateButton 
             onClick={translateText} 
             isLoading={isTranslating}
-            disabled={!japaneseText.trim()}
+            disabled={!japaneseText.trim() || isRecording}
           />
         </div>
       </CardContent>
