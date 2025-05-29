@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -42,14 +41,12 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({ text, language, disabled })
     const languageMap: { [key: string]: string } = {
       'en': 'en-US',
       'es': 'es-ES',
-      'fr': 'fr-FR',
       'de': 'de-DE',
       'it': 'it-IT',
       'pt': 'pt-PT',
       'ru': 'ru-RU',
       'zh': 'zh-CN',
       'ko': 'ko-KR',
-      'ar': 'ar-SA',
       'hi': 'hi-IN',
       'th': 'th-TH',
       'vi': 'vi-VN',
