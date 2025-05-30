@@ -9,6 +9,8 @@ import TranslateButton from './TranslateButton';
 import SpeechRecognition from './SpeechRecognition';
 import TextToSpeech from './TextToSpeech';
 import { useToast } from '@/hooks/use-toast';
+import { TranslationService } from '../services/translationService';
+import { MAX_TEXT_LENGTH } from '../utils/security';
 
 const TranslationCard = () => {
   const [japaneseText, setJapaneseText] = useState('');
@@ -31,32 +33,24 @@ const TranslationCard = () => {
     setIsTranslating(true);
     
     try {
-      // Using a free translation API (MyMemory)
-      const response = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(japaneseText)}&langpair=ja|${targetLanguage}`
-      );
+      const result = await TranslationService.translateText(japaneseText, targetLanguage);
       
-      const data = await response.json();
-      
-      if (data.responseStatus === 200) {
-        setTranslatedText(data.responseData.translatedText);
+      if (result.success && result.translation) {
+        setTranslatedText(result.translation);
         toast({
           title: "Translation completed!",
           description: "Your text has been successfully translated.",
         });
       } else {
-        throw new Error('Translation failed');
+        throw new Error(result.error || 'Translation failed');
       }
     } catch (error) {
       console.error('Translation error:', error);
       toast({
         title: "Translation failed",
-        description: "Please try again later or check your internet connection.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive"
       });
-      
-      // Fallback demo translation for demonstration
-      setTranslatedText("Translation service unavailable. This is a demo translation.");
     } finally {
       setIsTranslating(false);
     }
@@ -81,6 +75,21 @@ const TranslationCard = () => {
 
   const handleSpeechTranscription = (transcript: string) => {
     setJapaneseText(transcript);
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    
+    if (newText.length > MAX_TEXT_LENGTH) {
+      toast({
+        title: "Text too long",
+        description: `Maximum ${MAX_TEXT_LENGTH} characters allowed`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setJapaneseText(newText);
   };
 
   return (
@@ -121,14 +130,20 @@ const TranslationCard = () => {
               </div>
             </div>
             
-            <Textarea
-              placeholder="ここに日本語のテキストを入力してください..."
-              value={japaneseText}
-              onChange={(e) => setJapaneseText(e.target.value)}
-              className="min-h-[120px] text-lg border-2 border-gray-200 focus:border-blue-400 transition-colors"
-              style={{ fontFamily: '"Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif' }}
-              disabled={isRecording}
-            />
+            <div className="relative">
+              <Textarea
+                placeholder="ここに日本語のテキストを入力してください..."
+                value={japaneseText}
+                onChange={handleTextChange}
+                className="min-h-[120px] text-lg border-2 border-gray-200 focus:border-blue-400 transition-colors"
+                style={{ fontFamily: '"Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif' }}
+                disabled={isRecording}
+                maxLength={MAX_TEXT_LENGTH}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                {japaneseText.length}/{MAX_TEXT_LENGTH}
+              </div>
+            </div>
             
             {isRecording && (
               <div className="text-center text-blue-600 text-sm animate-pulse">
