@@ -59,6 +59,7 @@ export class TranslationService {
 
   static async translateText(
     text: string, 
+    sourceLanguage: string,
     targetLanguage: string
   ): Promise<{ success: boolean; translation?: string; error?: string }> {
     try {
@@ -83,17 +84,17 @@ export class TranslationService {
         };
       }
 
-      // Validate target language
-      const allowedLanguages = ['en', 'es', 'de', 'it', 'pt', 'ru', 'zh', 'ko', 'hi', 'th', 'vi', 'nl', 'sv'];
-      if (!allowedLanguages.includes(targetLanguage)) {
+      // Validate languages
+      const allowedLanguages = ['ja', 'en', 'es', 'de', 'it', 'pt', 'ru', 'zh', 'ko', 'hi', 'th', 'vi', 'nl', 'sv'];
+      if (!allowedLanguages.includes(sourceLanguage) || !allowedLanguages.includes(targetLanguage)) {
         return {
           success: false,
-          error: 'Unsupported target language'
+          error: 'Unsupported language pair'
         };
       }
 
       // Make the API request
-      const url = `${API_CONFIG.baseUrl}/get?q=${encodeURIComponent(validation.sanitizedText)}&langpair=ja|${targetLanguage}`;
+      const url = `${API_CONFIG.baseUrl}/get?q=${encodeURIComponent(validation.sanitizedText)}&langpair=${sourceLanguage}|${targetLanguage}`;
       const response = await this.makeRequest(url);
       const data = await response.json();
 
